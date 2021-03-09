@@ -7,6 +7,7 @@ import {
   InputType,
   Mutation,
   ObjectType,
+  Query,
   Resolver,
 } from "type-graphql";
 import argon2 from "argon2";
@@ -43,7 +44,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("input") input: UsernamePasswordInput,
-    @Ctx() { em }: AppContext
+    @Ctx() { em, req }: AppContext
   ): Promise<UserResponse> {
     // TODO: Use validation library
     if (input.username.length <= 3) {
@@ -89,13 +90,17 @@ export class UserResolver {
         };
       }
     }
+
+    // Set logged in cookie
+    req.session.user = { id: user.id };
+
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("input") input: UsernamePasswordInput,
-    @Ctx() { em }: AppContext
+    @Ctx() { em, req }: AppContext
   ): Promise<UserResponse> {
     const loginError = [
       {
@@ -122,8 +127,21 @@ export class UserResolver {
       };
     }
 
+    req.session.user = { id: user.id };
+
     return {
       user,
     };
+  }
+
+  @Query(() => User, { nullable: true })
+  async user(@Ctx() { em, req }: AppContext) {
+    // Unlogged user
+    if (!req.session.user.id) {
+      return null;
+    }
+
+    const user = await em.findOne(User, { id: req.session.user.id });
+    return user;
   }
 }
