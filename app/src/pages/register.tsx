@@ -9,17 +9,41 @@ import {
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { Wrapper } from "../components/Wrapper";
+import { useRegisterMutation } from "../generated/graphql";
+import addServerErrors from "../util/addServerErrors";
+import { useRouter } from "next/router";
+import { assertValidExecutionArguments } from "graphql/execution/execute";
+
+type FormData = {
+  username: string;
+  password: string;
+};
 
 const Register = ({}) => {
-  const { register, handleSubmit, errors, formState } = useForm();
-  const onSubmit = (data) => {
-    console.log(data);
+  const router = useRouter();
+  const [, registerUser] = useRegisterMutation();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    errors,
+    formState,
+  } = useForm<FormData>();
+
+  const onSubmit = async (data: FormData) => {
+    const response = await registerUser(data);
+    console.log("la respuesta", response);
+    if (response.data?.register.errors) {
+      addServerErrors<FormData>(response.data?.register.errors, setError);
+    } else if (response.data?.register.user) {
+      router.push("/");
+    }
   };
 
   return (
     <Wrapper variant="small">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FormControl isInvalid={false}>
+        <FormControl isInvalid={!!errors.username}>
           <FormLabel htmlFor="username">Username</FormLabel>
           <Input name="username" placeholder="username" ref={register} />
           <FormErrorMessage>
@@ -27,7 +51,7 @@ const Register = ({}) => {
           </FormErrorMessage>
         </FormControl>
         <Box mt={4}>
-          <FormControl isInvalid={false}>
+          <FormControl isInvalid={!!errors.password}>
             <FormLabel htmlFor="password">Password</FormLabel>
             <Input
               name="password"
