@@ -95,6 +95,30 @@ export type UsernamePasswordInput = {
   password: Scalars['String'];
 };
 
+export type UserCommonDataFragment = (
+  { __typename?: 'User' }
+  & Pick<User, 'id' | 'username'>
+);
+
+export type LoginMutationVariables = Exact<{
+  input: UsernamePasswordInput;
+}>;
+
+
+export type LoginMutation = (
+  { __typename?: 'Mutation' }
+  & { login: (
+    { __typename?: 'UserResponse' }
+    & { user?: Maybe<(
+      { __typename?: 'User' }
+      & UserCommonDataFragment
+    )>, errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & Pick<FieldError, 'field' | 'message'>
+    )>> }
+  ) }
+);
+
 export type RegisterMutationVariables = Exact<{
   username: Scalars['String'];
   password: Scalars['String'];
@@ -107,7 +131,7 @@ export type RegisterMutation = (
     { __typename?: 'UserResponse' }
     & { user?: Maybe<(
       { __typename?: 'User' }
-      & Pick<User, 'username'>
+      & UserCommonDataFragment
     )>, errors?: Maybe<Array<(
       { __typename?: 'FieldError' }
       & Pick<FieldError, 'field' | 'message'>
@@ -115,12 +139,28 @@ export type RegisterMutation = (
   ) }
 );
 
+export type UserQueryVariables = Exact<{ [key: string]: never; }>;
 
-export const RegisterDocument = gql`
-    mutation Register($username: String!, $password: String!) {
-  register(input: {username: $username, password: $password}) {
+
+export type UserQuery = (
+  { __typename?: 'Query' }
+  & { user?: Maybe<(
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username'>
+  )> }
+);
+
+export const UserCommonDataFragmentDoc = gql`
+    fragment UserCommonData on User {
+  id
+  username
+}
+    `;
+export const LoginDocument = gql`
+    mutation Login($input: UsernamePasswordInput!) {
+  login(input: $input) {
     user {
-      username
+      ...UserCommonData
     }
     errors {
       field
@@ -128,8 +168,37 @@ export const RegisterDocument = gql`
     }
   }
 }
-    `;
+    ${UserCommonDataFragmentDoc}`;
+
+export function useLoginMutation() {
+  return Urql.useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
+};
+export const RegisterDocument = gql`
+    mutation Register($username: String!, $password: String!) {
+  register(input: {username: $username, password: $password}) {
+    user {
+      ...UserCommonData
+    }
+    errors {
+      field
+      message
+    }
+  }
+}
+    ${UserCommonDataFragmentDoc}`;
 
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
+};
+export const UserDocument = gql`
+    query User {
+  user {
+    id
+    username
+  }
+}
+    `;
+
+export function useUserQuery(options: Omit<Urql.UseQueryArgs<UserQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<UserQuery>({ query: UserDocument, ...options });
 };

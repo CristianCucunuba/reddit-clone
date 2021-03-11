@@ -1,7 +1,7 @@
 mutation Register($username: String!, $password: String!) {
   register(input: { username: $username, password: $password }) {
     user {
-      username
+      ...UserCommonData
     }
     errors {
       field

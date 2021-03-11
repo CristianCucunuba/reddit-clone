@@ -104,7 +104,7 @@ export class UserResolver {
   ): Promise<UserResponse> {
     const loginError = [
       {
-        field: "login",
+        field: "password",
         message: "the username or password is incorrect please try again",
       },
     ];
