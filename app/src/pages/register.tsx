@@ -12,7 +12,8 @@ import { Wrapper } from "../components/Wrapper";
 import { useRegisterMutation } from "../generated/graphql";
 import addServerErrors from "../util/addServerErrors";
 import { useRouter } from "next/router";
-import { assertValidExecutionArguments } from "graphql/execution/execute";
+import { withUrqlClient } from "next-urql";
+import { createUrqlClient } from "../util/createUrqlClient";
 
 type FormData = {
   username: string;
@@ -76,4 +77,4 @@ const Register = ({}) => {
   );
 };
 
-export default Register;
+export default withUrqlClient(createUrqlClient)(Register);

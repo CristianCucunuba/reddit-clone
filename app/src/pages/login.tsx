@@ -12,6 +12,8 @@ import { Wrapper } from "../components/Wrapper";
 import { useLoginMutation } from "../generated/graphql";
 import addServerErrors from "../util/addServerErrors";
 import { useRouter } from "next/router";
+import { withUrqlClient } from "next-urql";
+import { createUrqlClient } from "../util/createUrqlClient";
 
 type FormData = {
   username: string;
@@ -73,4 +75,4 @@ const Login = ({}) => {
   );
 };
 
-export default Login;
+export default withUrqlClient(createUrqlClient)(Login);
