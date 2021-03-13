@@ -6,6 +6,7 @@ import { cacheExchange, Cache, QueryInput } from "@urql/exchange-graphcache";
 import theme from "../theme";
 import {
   LoginMutation,
+  LogoutMutation,
   RegisterMutation,
   UserDocument,
   UserQuery,
@@ -44,6 +45,16 @@ function MyApp({ Component, pageProps }: AppProps) {
                       user: result.login.user,
                     };
                   }
+                }
+              );
+            },
+            logout: (_result, args, cache, info) => {
+              betterUpdateQuery<LogoutMutation, UserQuery>(
+                cache,
+                { query: UserDocument },
+                _result,
+                () => {
+                  return { user: null };
                 }
               );
             },
