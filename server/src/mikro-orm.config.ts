@@ -4,7 +4,6 @@ import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 
-console.log("dirname", __dirname);
 export default {
   migrations: {
     path: path.join(__dirname, "./migrations"),

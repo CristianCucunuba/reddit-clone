@@ -12,10 +12,12 @@ import {
 } from "type-graphql";
 import argon2 from "argon2";
 import { USER_SESSION_COOKIE } from "../constants";
-import { rejects } from "node:assert";
 
 @InputType()
 class UsernamePasswordInput {
+  @Field()
+  email: string;
+
   @Field()
   username: string;
 
@@ -43,12 +45,29 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  // @Mutation(() => Boolean)
+  // async forgotPassword(@Arg("email") email: string, @Ctx() { em }: AppContext) {
+  //   // const user = await em.findOne(User, { email });
+  //   return true;
+  // }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg("input") input: UsernamePasswordInput,
     @Ctx() { em, req }: AppContext
   ): Promise<UserResponse> {
     // TODO: Use validation library
+    if (input.email.includes("@")) {
+      return {
+        errors: [
+          {
+            field: "email",
+            message: "invalid email",
+          },
+        ],
+      };
+    }
+
     if (input.username.length <= 3) {
       return {
         errors: [
@@ -74,6 +93,7 @@ export class UserResolver {
     const hashedPassword = await argon2.hash(input.password);
     const user = em.create(User, {
       username: input.username,
+      email: input.email,
       password: hashedPassword,
     });
 
@@ -101,7 +121,8 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("input") input: UsernamePasswordInput,
+    @Arg("usernameOrEmail") usernameOrEmail: string,
+    @Arg("password") password: string,
     @Ctx() { em, req }: AppContext
   ): Promise<UserResponse> {
     const loginError = [
@@ -111,9 +132,12 @@ export class UserResolver {
       },
     ];
 
-    const user = await em.findOne(User, {
-      username: input.username,
-    });
+    const user = await em.findOne(
+      User,
+      usernameOrEmail.includes("@")
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail }
+    );
 
     if (!user) {
       return {
@@ -121,7 +145,7 @@ export class UserResolver {
       };
     }
 
-    const validPassword = await argon2.verify(user.password, input.password);
+    const validPassword = await argon2.verify(user.password, password);
 
     if (!validPassword) {
       return {
